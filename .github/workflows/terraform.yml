@@ -22,6 +22,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.5.0'
+
       - name: Install Terragrunt
         run: |
           curl -LO https://github.com/gruntwork-io/terragrunt/releases/download/v0.45.8/terragrunt_linux_amd64
@@ -60,17 +65,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Terraform plan
-        uses: actions/download-artifact@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          name: tfplan
-          path: .
+          terraform_version: '1.5.0'
 
       - name: Install Terragrunt
         run: |
           curl -LO https://github.com/gruntwork-io/terragrunt/releases/download/v0.45.8/terragrunt_linux_amd64
           chmod +x terragrunt_linux_amd64
           sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+
+      - name: Download Terraform plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: .
 
       - name: Azure Login
         uses: azure/login@v1
