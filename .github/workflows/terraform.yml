@@ -4,18 +4,16 @@ on:
   push:
     branches:
       - main
-      - 'feature/**'       # auto-run on any feature/* branch
+      - 'feature/**'
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch:      # enables manual “Run workflow” button
+  workflow_dispatch:
 
 jobs:
   terraform-plan:
-    name: Terraform Plan
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: true
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,15 +30,12 @@ jobs:
 
       - name: Terraform Init
         run: terraform init -input=false
-        # working-directory: infra          # ← uncomment & adjust if your code lives in a subfolder
 
       - name: Terraform Validate
         run: terraform validate
-        # working-directory: infra
 
       - name: Terraform Plan
         run: terraform plan -input=false -out=tfplan
-        # working-directory: infra
 
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
@@ -49,13 +44,10 @@ jobs:
           path: tfplan
 
   terraform-apply:
-    name: Terraform Apply
     needs: terraform-plan
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    environment:
-      name: production
-
+    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,4 +70,3 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
-        # working-directory: infra
