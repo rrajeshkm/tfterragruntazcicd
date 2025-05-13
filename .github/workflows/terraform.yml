@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - main
-      - 'feature/**'
+      - 'feature/**'       # auto-run on any feature/* branch
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch:
+  workflow_dispatch:      # enables manual “Run workflow” button
 
 jobs:
   terraform-plan:
@@ -32,21 +32,21 @@ jobs:
 
       - name: Terraform Init
         run: terraform init -input=false
-        working-directory: terraform
+        # working-directory: infra          # ← uncomment & adjust if your code lives in a subfolder
 
       - name: Terraform Validate
         run: terraform validate
-        working-directory: terraform
+        # working-directory: infra
 
       - name: Terraform Plan
         run: terraform plan -input=false -out=tfplan
-        working-directory: terraform
+        # working-directory: infra
 
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: terraform/tfplan
+          path: tfplan
 
   terraform-apply:
     name: Terraform Apply
@@ -64,7 +64,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: terraform
+          path: .
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -78,4 +78,4 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
-        working-directory: terraform
+        # working-directory: infra
