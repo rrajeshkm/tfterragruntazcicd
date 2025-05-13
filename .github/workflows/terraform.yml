@@ -1,11 +1,13 @@
 name: Terraform CI/CD
 
+# Trigger on pushes to main, PRs, and manual dispatch if you add workflow_dispatch
 on:
   push:
     branches:
       - feature/terraform-ci
   pull_request:
     types: [opened, synchronize, reopened]
+  # workflow_dispatch:  # ← uncomment if you want a “Run workflow” button
 
 jobs:
   terraform-plan:
@@ -30,21 +32,21 @@ jobs:
 
       - name: Terraform Init
         run: terraform init -input=false
-        # working-directory: infra  # commented out because 'infra' folder isn't present
+        # working-directory: infra      # ← commented out; run at repo root
 
       - name: Terraform Validate
         run: terraform validate
-        # working-directory: infra  # commented out due to missing infra directory
+        # working-directory: infra      # ← commented out
 
       - name: Terraform Plan
         run: terraform plan -input=false -out=tfplan
-        # working-directory: infra  # commented out so plan runs at repo root
+        # working-directory: infra      # ← commented out
 
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: tfplan     # plan file lives at repo root now
+          path: tfplan                # plan file is at the repo root now
 
   terraform-apply:
     name: Terraform Apply
@@ -62,7 +64,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          # path: infra   # commented out so artifact downloads to the repo root
+          path: .                     # download plan into the repo root
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -76,4 +78,4 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
-        # working-directory: infra  # commented out so apply runs at repo root
+        # working-directory: infra      # ← commented out
