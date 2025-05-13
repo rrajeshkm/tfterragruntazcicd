@@ -1,13 +1,13 @@
 name: Terraform CI/CD
 
-# Trigger on pushes to main, PRs, and manual dispatch if you add workflow_dispatch
 on:
   push:
     branches:
-      - feature/terraform-ci
+      - main
+      - 'feature/**'
   pull_request:
     types: [opened, synchronize, reopened]
-  # workflow_dispatch:  # ← uncomment if you want a “Run workflow” button
+  workflow_dispatch:
 
 jobs:
   terraform-plan:
@@ -17,13 +17,13 @@ jobs:
       TF_IN_AUTOMATION: true
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0
+          terraform_version: '1.5.0'
 
       - name: Azure Login
         uses: azure/login@v1
@@ -32,21 +32,21 @@ jobs:
 
       - name: Terraform Init
         run: terraform init -input=false
-        # working-directory: infra      # ← commented out; run at repo root
+        working-directory: terraform
 
       - name: Terraform Validate
         run: terraform validate
-        # working-directory: infra      # ← commented out
+        working-directory: terraform
 
       - name: Terraform Plan
         run: terraform plan -input=false -out=tfplan
-        # working-directory: infra      # ← commented out
+        working-directory: terraform
 
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: tfplan                # plan file is at the repo root now
+          path: terraform/tfplan
 
   terraform-apply:
     name: Terraform Apply
@@ -57,19 +57,19 @@ jobs:
       name: production
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Download Terraform plan
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: .                     # download plan into the repo root
+          path: terraform
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0
+          terraform_version: '1.5.0'
 
       - name: Azure Login
         uses: azure/login@v1
@@ -78,4 +78,4 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
-        # working-directory: infra      # ← commented out
+        working-directory: terraform
