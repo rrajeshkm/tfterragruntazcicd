@@ -1,4 +1,5 @@
 name: Terraform CI/CD
+
 on:
   push:
     branches:
@@ -14,30 +15,36 @@ jobs:
       TF_IN_AUTOMATION: true
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
 
-      - uses: azure/login@v1
+      - name: Azure Login
+        uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - run: terraform init -input=false
-        working-directory: ./infra
+      - name: Terraform Init
+        run: terraform init -input=false
+        # working-directory: infra  # commented out because 'infra' folder isn't present
 
-      - run: terraform validate
-        working-directory: ./infra
+      - name: Terraform Validate
+        run: terraform validate
+        # working-directory: infra  # commented out due to missing infra directory
 
-      - run: terraform plan -out=tfplan
-        working-directory: ./infra
+      - name: Terraform Plan
+        run: terraform plan -input=false -out=tfplan
+        # working-directory: infra  # commented out so plan runs at repo root
 
-      - name: Save Terraform plan
+      - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
         with:
-           name: tfplan
-           path: infra/tfplan
+          name: tfplan
+          path: tfplan     # plan file lives at repo root now
 
   terraform-apply:
     name: Terraform Apply
@@ -48,20 +55,25 @@ jobs:
       name: production
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - name: Download Terraform plan
+        uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: infra
+          # path: infra   # commented out so artifact downloads to the repo root
 
-      - uses: hashicorp/setup-terraform@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
 
-      - uses: azure/login@v1
+      - name: Azure Login
+        uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - run: terraform apply -auto-approve tfplan
-        working-directory: ./infra
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        # working-directory: infra  # commented out so apply runs at repo root
