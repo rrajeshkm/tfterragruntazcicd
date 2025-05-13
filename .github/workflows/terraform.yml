@@ -1,4 +1,6 @@
-name: Terraform CI/CD
+# .github/workflows/terragrunt-ci-cd.yml
+
+name: Terragrunt CI/CD
 
 on:
   push:
@@ -10,32 +12,35 @@ on:
   workflow_dispatch:
 
 jobs:
-  terraform-plan:
+  terragrunt-plan:
+    name: Terragrunt Plan
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: true
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: '1.5.0'
+      - name: Install Terragrunt
+        run: |
+          curl -LO https://github.com/gruntwork-io/terragrunt/releases/download/v0.45.8/terragrunt_linux_amd64
+          chmod +x terragrunt_linux_amd64
+          sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
 
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Terraform Init
-        run: terraform init -input=false
+      - name: Terragrunt Init
+        run: terragrunt init -input=false
 
-      - name: Terraform Validate
-        run: terraform validate
+      - name: Terragrunt Validate
+        run: terragrunt validate
 
-      - name: Terraform Plan
-        run: terraform plan -input=false -out=tfplan
+      - name: Terragrunt Plan
+        run: terragrunt plan -out=tfplan
 
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
@@ -43,11 +48,14 @@ jobs:
           name: tfplan
           path: tfplan
 
-  terraform-apply:
-    needs: terraform-plan
+  terragrunt-apply:
+    name: Terragrunt Apply
+    needs: terragrunt-plan
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    environment: production
+    environment:
+      name: production
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,15 +66,16 @@ jobs:
           name: tfplan
           path: .
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: '1.5.0'
+      - name: Install Terragrunt
+        run: |
+          curl -LO https://github.com/gruntwork-io/terragrunt/releases/download/v0.45.8/terragrunt_linux_amd64
+          chmod +x terragrunt_linux_amd64
+          sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
 
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+      - name: Terragrunt Apply
+        run: terragrunt apply -auto-approve tfplan
