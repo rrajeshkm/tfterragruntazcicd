@@ -1,11 +1,11 @@
 # terragrunt.hcl
+# Place this file at the root of your repository, next to .github/
 
-# You can tweak the location here if desired
 locals {
   location = "eastus"
 }
 
-# Generate a Terraform file with provider, RG resource, variables & outputs
+# Generate a Terraform configuration, including an empty backend block
 generate "main_tf" {
   path      = "main.tf"
   if_exists = "overwrite"
@@ -18,6 +18,9 @@ terraform {
     }
   }
   required_version = ">= 1.5.0"
+
+  # Empty backend so Terragrunt's remote_state config is applied
+  backend "azurerm" {}
 }
 
 provider "azurerm" {
@@ -31,7 +34,7 @@ variable "location" {
 }
 
 resource "azurerm_resource_group" "ci_demo" {
-  name     = "ci-demo-resource-group"
+  name     = "ci-demo-rg"
   location = var.location
 }
 
@@ -42,7 +45,7 @@ output "resource_group_name" {
 EOF
 }
 
-# (Optional) configure remote state for this repo
+# Tell Terragrunt how to configure remote state
 remote_state {
   backend = "azurerm"
   config = {
