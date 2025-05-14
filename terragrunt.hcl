@@ -3,7 +3,6 @@ name: Terragrunt CI/CD
 on:
   push:
     branches:
-      - main
       - 'feature/**'
   pull_request:
     types: [opened, synchronize, reopened]
